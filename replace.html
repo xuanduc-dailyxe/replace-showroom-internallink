@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Replace Brand and Create Table</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        label {
+            display: inline-block;
+            margin-bottom: 5px;
+        }
+
+
+
+        .btn {
+            padding: 7px 12px;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+            vertical-align: top;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container py-3">
+        <h1>Build InternalLinks Showroom</h1>
+        <hr>
+        <div class="row">
+            <div class="col-lg-4">
+                <label>Table HTML Dòng xe:</label>
+                <textarea class="form-control" id="tableModel" rows="5" cols="50" placeholder="Table HTML Dòng xe..."></textarea><br>
+                <label for="keywordsTextarea">Danh sách tiêu đề dòng xe:</label>
+                <br>
+                <textarea class="form-control" id="keywordsModel" rows="5" cols="50" placeholder="Danh sách tiêu đề dòng xe..."></textarea>
+                <br>
+                <div class="row">
+                    <div class="col-6">
+                        <label for="brandInput">Tên hãng:</label><br>
+                        <input class="form-control" type="text" id="brandInput" placeholder="Nhập tên hãng">
+                    </div>
+                    <div class="col-6">
+                        <label for="brandInput">Số đại lý:</label><br>
+                        <input class="form-control" type="number" id="dealerCount" placeholder="Số đại lý">
+                    </div>
+                </div>
+                <br>
+                <br>
+                <label for="brandInput">Link danh sách đại lý:</label><br>
+                <input class="form-control" type="text" id="dealerUrlInput" placeholder="Link danh sách đại lý">
+                <br><br>
+                <label for="keywordsTextarea">Danh sách từ khóa:</label>
+                <br>
+                <textarea class="form-control" id="keywordsTextarea" rows="7" cols="50" placeholder="Dán danh sách từ khóa vào đây..."></textarea>
+                <br><br>
+                <button class="btn btn-primary" onclick="processKeywords()">Xử lý</button>
+            </div>
+            <div class="col-lg-8">
+                <label>Danh sách dòng xe:</label>
+                <div id="tableModelContainer"></div>
+                <p>===========================================================</p>
+                <label>Kết quả: <span id="resultCount"></span></label>
+                <div id="tableContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+          <div class="toast-header"> 
+            <strong class="me-auto">Thông báo</strong> 
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+          </div>
+          <div class="toast-body">
+            Đã copy !!
+          </div>
+        </div>
+      </div>
+
+
+    <script>
+        function copyTableToClipboard() {
+            // Tạo một phần tử textarea tạm thời
+            var tempInput = document.createElement('textarea');
+
+            // Lấy nội dung của bảng và định dạng thành CSV
+            var tableData = document.getElementById('tableContainer').innerText;
+
+            // Gán nội dung CSV vào textarea tạm thời
+            tempInput.value = tableData;
+
+            // Thêm textarea tạm thời vào DOM
+            document.body.appendChild(tempInput);
+
+            // Chọn và sao chép nội dung của textarea
+            tempInput.select();
+            document.execCommand('copy');
+
+            // Xóa textarea tạm thời khỏi DOM
+            document.body.removeChild(tempInput);
+
+            const toastLiveExample = document.getElementById('liveToast')
+            const toastBootstrap = bootstrap.Toast.getOrCreateInstance(toastLiveExample)
+            toastBootstrap.show()
+        }
+
+        function processKeywords() {
+            var brandName = $('#brandInput').val().trim();
+            var dealerCount = parseInt($('#dealerCount').val());
+            var dealerUrlInput = $('#dealerUrlInput').val().trim();
+            var keywordsText = $('#keywordsTextarea').val().trim();
+            var keywordsModel = $('#keywordsModel').val().trim();
+            var tableModel = $('#tableModel').val().trim();
+
+            var strKeywordsText = JSON.stringify(keywordsText);
+            var strTableModel = JSON.stringify(tableModel);
+            var strKeywordsModel = JSON.stringify(keywordsModel);
+
+            localStorage.setItem("brandName", brandName);
+            localStorage.setItem("dealerCount", dealerCount);
+            localStorage.setItem("dealerUrlInput", dealerUrlInput);
+            localStorage.setItem("keywordsText", strKeywordsText);
+            localStorage.setItem("keywordsModel", strKeywordsModel);
+            localStorage.setItem("tableModel", strTableModel);
+
+
+            
+
+            // Tìm link model
+            var tableModel = $(tableModel)[0];
+
+            var countModel = $(tableModel).find('.IsShowPriceList .switch>input[value="1"]').length;
+
+            var countRowLoop = Math.floor(dealerCount / countModel);
+            console.log("countRowLoop", countRowLoop);
+ 
+            var tableModelHTML = '<table class="table">';
+            var modelName = modelHref = "";
+            var dataModel = [];
+            $(tableModel).find("tbody>tr").each(function (index, item) {
+                if (parseInt($(this).find('.switch>input').attr("value")) == 1) {
+                    modelName = $(this).find("td").eq(3).find('a[href^="javascript:editData"]').text();
+                    modelHref = $(this).find('a[target="_blank"]').attr("href");
+                    tableModelHTML += `<tr><td class="text-center">${index + 1}</td><td>${modelName}</td><td>${modelHref}</td></tr>`;
+                    dataModel.push({
+                        "name": modelName,
+                        "url": modelHref
+                    })
+                }
+            })
+
+            tableModelHTML += '</table>';
+            $('#tableModelContainer').html(tableModelHTML);
+
+            // Tạo bảng
+            var keywordsArray = keywordsText.split('\n'); 
+
+            var keywordsModelArray = keywordsModel.split('\n');
+            keywordsModelArray.unshift("");
+
+            var tableHTML = '<table class="table">'; 
+            var itemModel = {};
+            var nameModel = updatedKeyword = updatedKeywordModel = "";
+            var indexModel = indexKeyModelTemp = indexKeyModel = countLoop = countRow = 0;
+           
+
+          
+            for(var i = 0;i < (dealerCount / keywordsArray.length); i ++){
+                keywordsArray.forEach(function (keyword) {
+                    if(countRow === dealerCount || countLoop === countRowLoop){
+                        console.log("return");
+                        return;
+                    } 
+
+                    itemModel = dataModel[indexModel % countModel]; 
+                    indexKeyModel = indexKeyModelTemp % keywordsModelArray.length;
+                    updatedKeywordModel = keywordsModelArray[indexKeyModel];
+                    updatedKeyword = keyword.replace(/{key}/g, brandName);
+                    nameModel = updatedKeywordModel + " " + itemModel.name; 
+
+                    tableHTML += `<tr><td><b>${updatedKeyword}</b></td><td>${dealerUrlInput}</td></tr>`;
+                    tableHTML += `<tr><td>${nameModel.trim()}</td><td>${itemModel.url}</td></tr>`;
+                    countRow += 1;
+                     
+                    indexKeyModel += 1;
+                    if (indexModel % countModel == (countModel - 1)) {
+                        indexKeyModelTemp += 1;
+                        countLoop += 1;
+                    }
+                    indexModel += 1; 
+                });
+            }
+           
+            
+
+            tableHTML += '</table>';
+            $('#tableContainer').html(tableHTML);
+            $('#resultCount').text(countRow - 1);
+            copyTableToClipboard();
+        }
+
+        $(document).ready(function () {
+            var brandName = localStorage.getItem("brandName", brandName);
+            var dealerCount = localStorage.getItem("dealerCount", dealerCount);
+            var dealerUrlInput = localStorage.getItem("dealerUrlInput", dealerUrlInput);
+            var strKeywordsText = localStorage.getItem("keywordsText");
+            if (strKeywordsText) {
+                $('#keywordsTextarea').val(JSON.parse(strKeywordsText));
+            }
+
+            var strKeywordsModel = localStorage.getItem("keywordsModel");
+            if (strKeywordsModel) {
+                $('#keywordsModel').val(JSON.parse(strKeywordsModel));
+            }
+
+            var strTableModel = localStorage.getItem("tableModel");
+            if (strTableModel) {
+                $('#tableModel').val(JSON.parse(strTableModel));
+            } 
+            if (brandName) {
+                $('#brandInput').val(brandName);
+            }
+            if (dealerCount) {
+                $('#dealerCount').val(dealerCount);
+            }
+            if (dealerUrlInput) {
+                $('#dealerUrlInput').val(dealerUrlInput);
+            }
+
+            processKeywords(); 
+        })
+    </script>
+</body>
+
+</html>
